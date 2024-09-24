@@ -24,6 +24,47 @@ app.get('/healthz', (c) => {
 })
 
 // POST route to handle prompt submission
+// app.post('/generate', async (c) => {
+//   try {
+//     // Parse the incoming JSON request body
+//     const { prompt } = await c.req.json();
+
+//     // Check if prompt exists
+//     if (!prompt) {
+//       return c.json({ error: "No prompt provided!" }, 400)
+//     }
+
+//     // Load model and generate response
+//     const model = await loadModel();
+//     const response = await model.generateContent(prompt);
+//     // Extract the generated text
+//     // Extract the generated text
+//     // Extract the generated text safely
+//     const generatedText = response.response?.candidates?.[0]?.content?.parts?.[0]?.text;
+//     // Check if generated text is available
+//     if (!generatedText) {
+//       return c.json({ error: "No content generated!" }, 500);
+//     }
+
+//     // Clean and format the generated text
+//     const formattedText = generatedText.replace(/\n+/g, '\n').trim();
+
+
+
+
+
+//     // Return the response in pretty JSON format
+//     //console.log(dump(formattedText))
+//     return c.json(formattedText, 200)
+
+//   } catch (error) {
+//     console.error('Error:', error);
+//     return c.json({ error: 'Something went wrong!' }, 500)
+//   }
+// })
+
+
+//////////////// formatted response via text/plain
 app.post('/generate', async (c) => {
   try {
     // Parse the incoming JSON request body
@@ -31,38 +72,40 @@ app.post('/generate', async (c) => {
 
     // Check if prompt exists
     if (!prompt) {
-      return c.json({ error: "No prompt provided!" }, 400)
+      return c.json({ error: "No prompt provided!" }, 400);
     }
 
     // Load model and generate response
     const model = await loadModel();
     const response = await model.generateContent(prompt);
-    // Extract the generated text
-    // Extract the generated text
+
     // Extract the generated text safely
     const generatedText = response.response?.candidates?.[0]?.content?.parts?.[0]?.text;
+
     // Check if generated text is available
     if (!generatedText) {
       return c.json({ error: "No content generated!" }, 500);
     }
 
-    // Clean and format the generated text
-    const formattedText = generatedText.replace(/\n+/g, '\n').trim();
+    // Clean and format the generated text for CLI output
+    let formattedText = generatedText
+      .replace(/```(javascript|js|jsx|tsx|python|html|java|ts)?/g, '') // Remove Markdown block markers for all languages
+      .replace(/[*_`~]/g, '') // Remove common Markdown symbols
+      .replace(/\\n/g, '\n') // Replace escaped newline characters with actual newlines
+      .replace(/&lt;/g, '<').replace(/&gt;/g, '>') // Handle HTML entity codes
+      .trim();
 
-
-
-
-
-    // Return the response in pretty JSON format
-    //console.log(dump(formattedText))
-    return c.json(formattedText, 200)
+    // Return the formatted response as plain text
+    return c.text(formattedText, 200); // Send plain text response instead of JSON
 
   } catch (error) {
     console.error('Error:', error);
-    return c.json({ error: 'Something went wrong!' }, 500)
+    return c.json({ error: 'Something went wrong!' }, 500);
   }
-})
+});
 
+
+//
 
 
 console.log(`Server is running on port ${port}`)
