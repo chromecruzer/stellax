@@ -16,7 +16,8 @@ app.use(logger())
 
 // Load the AI model (Gemini 1.5 Flash)
 const loadModel = async () => {
-  return await genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+ // return await genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+  return await genAI.getGenerativeModel({ model: "gemini-1.0-pro" });
 }
 
 app.get('/healthz', (c) => {
