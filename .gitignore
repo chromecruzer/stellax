@@ -1,0 +1,8 @@
+# No way Nigga..!!
+node_modules
+dist
+ 
+
+# Environment Var
+.env
+.env.local
