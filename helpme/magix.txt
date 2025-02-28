@@ -1,0 +1,560 @@
+cumming soon!
+
+{
+  "name": "express-starter",
+  "scripts": {
+    "dev": "tsx watch --inspect src/index.js",
+    "build": "node esbuild.config.cjs",
+    "start": "node --max-old-space-size=512 bundle.main.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "lodash": "^4.17.21",
+    "pug": "^3.0.3",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.17",
+    "esbuild": "^0.24.0",
+    "tsx": "^4.7.1"
+  }
+}
+
+
+
+
+
+
+//////////////////////////////////////
+
+
+// config.js
+const esbuild = require('esbuild');
+const { dependencies, devDependencies, peerDependencies } = require('./package.json');
+
+// Combine all dependencies to exclude from the bundle
+const externals = [
+  ...Object.keys(dependencies || {}),
+  ...Object.keys(devDependencies || {}),
+  ...Object.keys(peerDependencies || {}),
+];
+
+esbuild.build({
+  entryPoints: ['./src/index.js'],
+  bundle: true,
+  //outfile: './dist/bundle.main.js',
+  outfile: 'bundle.main.js',
+  external: externals,
+  platform: 'node', // Use 'browser' if targeting browser
+  sourcemap: false, // Generate source maps
+  minify: true,
+  format: 'cjs', // CommonJS format; change to 'esm' for ES module output
+}).catch(() => process.exit(1));
+
+
+////////////////////////////////////////
+import { z } from "zod";
+import _ from "lodash";
+//import path from "path";
+const express = require("express");
+const app = express();
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+// Set Pug as the view engine
+app.set('view engine', 'pug');
+
+// Modify the views directory path
+//app.set('views', path.join(__dirname, 'custom_views'));
+const port = 3000 || process.env.PORT;
+
+const db = [
+  { name: `mani`, age: 32 },
+  { name: `gopal`, age: 32 },
+];
+
+// Define a schema for user validation
+const userSchema = z.object({
+  name: z.string().min(1, "Name is required"),
+  age: z.number().min(0, "Age must be a positive number"),
+});
+
+/**const { z } = require('zod');
+
+const userSchema = z.object({
+    name: z.string(),
+    email: z.string().email(),
+});
+
+const validateUser = (req, res, next) => {
+    const result = userSchema.safeParse(req.body);
+    if (!result.success) {
+        return res.status(400).json(result.error.errors);
+    }
+    req.body = result.data;
+    next();
+};
+ */
+
+app.get("/", (req, res) => {
+  res.render('index', { title: 'Hey', message: 'Hello there!' })
+});
+
+app.get("/api/data", (req, res) => {
+  res.status(200).json(db);
+});
+
+// Retrieve user by ID
+app.get("/api/:name", (req, res) => {
+  const user = _.find(db, (val) => val.name == req.params.name);
+  if (!user) {
+    return res.status(404).send("User not found");
+  }
+  res.json(user);
+});
+
+app.delete("/api/:name", (req, res) => {
+  const user = _.remove(db, (val) => val.name == req.params.name); 
+  if (!user) {
+    return res.status(404).send("User not found");
+  }
+  res.json(user);
+});
+
+app.listen(port, () => {
+  console.log(`Node-Js Express server is listening on port ${port}`);
+});
+
+
+/////////////////////
+
+views/index.pug
+html
+  head
+    title= title
+  body
+    h1= message
+
+
+///////////////////////
+
+
+console.log(`This is Typescript`)
+
+type User = {
+    userName: string;
+    age: number;
+    gender: ("male" | "female");
+    married: boolean;
+}
+
+const data: User = {
+    userName: "Mani",
+    age: 45,
+    gender: "male",
+    married: true
+}
+
+console.log(data.married)
+
+import express, { Response, Request } from "express";
+
+// Initialize the Express app
+const app = express();
+app.use(express.json())
+app.use(express.urlencoded({ extended: true }))
+
+// Define a class for handling routes
+class GetRoute {
+    message: string;
+    statusCode: number;
+
+    // Constructor to initialize values
+    constructor(message: string, statusCode: number) {
+        this.message = message;
+        this.statusCode = statusCode;
+    }
+
+    // Method to handle GET requests (async function without returning Promise)
+    getRoute(req: Request, res: Response): void {
+        try {
+            // Handle the async logic here, but don't return a promise to Express directly
+            res.status(this.statusCode).json({ msg: this.message });
+        } catch (err) {
+            console.error(err);
+            res.status(500).json({ msg: 'Internal Server Error' });
+        }
+    }
+}
+
+class PostRoute {
+    message: string;
+    statusCode: number;
+    contentType: string;
+
+    constructor(message: string, statusCode: number, contentType: string) {
+        this.message = message;
+        this.contentType = contentType;
+        this.statusCode = statusCode;
+    }
+
+    async postRoute(req: Request, res: Response): Promise<void> {
+        try {
+            if (this.contentType === "application/json") {
+                const { userName, age, gender, married }: User = req.body;
+                res.status(this.statusCode).json({ msg: this.message, name:userName, Userage:age, userGender: gender, Ismarried: married });
+                console.log(userName, age, gender, married)
+            } else {
+                res.status(404).send('Not Found');
+            }
+        } catch (err) {
+            res.status(500).json({ error: err });
+        }
+    }
+}
+
+
+// Instantiate the class and use it for routing
+const getRoute = new GetRoute("Hello, world!", 200);
+const postRoute = new PostRoute("this is Post route", 200, "application/json");
+
+// Set up the route using the class method
+app.get('/', (req: Request, res: Response) => getRoute.getRoute(req, res));
+app.get('/mokka', (req: Request, res: Response) => {
+    res.status(200).json({ msg: 'mokka' })
+})
+
+app.post('/submit', (req: Request, res: Response) => postRoute.postRoute(req, res))
+
+
+// Start the server
+app.listen(3000, () => {
+    console.log("Server is running on port 3000");
+});
+
+
+
+////////////////////////////////
+
+
+import { serve } from '@hono/node-server'
+import { Hono } from 'hono'
+import { logger } from 'hono/logger'
+import 'colors'
+import dotenv from 'dotenv'
+import { connectDb } from './database/db.js'
+import Product, { type IProduct } from "@poorvika-1/libs/lib"
+import { cors } from 'hono/cors'
+import { serveStatic } from '@hono/node-server/serve-static'
+
+// Load environment variables
+dotenv.config()
+
+// Initialize Hono app
+const app = new Hono()
+app.use(logger())  // Add logger 
+app.use(cors()) // using Hono CORS
+app.use('/*', serveStatic({ root: './client' })) // serve the static assets of Front End
+
+// Connect to the database
+connectDb()
+
+
+/////
+
+// GET - All products
+app.get('/api/products', async (c) => {
+  try {
+    const products = await Product.find();  // Fetch all products from the database
+    return c.json(products);  // Send the products as a JSON response
+  } catch (error) {
+    return c.json({ message: 'Error fetching products', error }, 500);  // Handle errors
+  }
+});
+
+
+// POST - Create a new product
+app.post("/api/product", async (c) => {
+  const { productName, productCode, price, description }: IProduct = await c.req.json();
+
+  try {
+    const product = new Product({
+      productName,
+      productCode,
+      price,
+      description
+    });
+
+    const result = await product.save();
+    return c.json({ message: "Product created", productId: result._id });
+  } catch (error) {
+    return c.json({ message: "Error creating product", error }, 500);
+  }
+});
+
+// GET - Get product by ID
+app.get("/api/product/:id", async (c) => {
+  const { id } = c.req.param();
+
+  try {
+    const product = await Product.findById(id);
+    if (!product) {
+      return c.json({ message: "Product not found" }, 404);
+    }
+    return c.json(product);
+  } catch (error) {
+    return c.json({ message: "Error retrieving product", error }, 500);
+  }
+});
+
+// PUT - Update product by ID
+app.put("/api/product/:id", async (c) => {
+  const { id } = c.req.param();
+  const { productName, productCode, price, description }: IProduct = await c.req.json();
+
+  try {
+    const product = await Product.findByIdAndUpdate(id, { productName, productCode, price, description }, { new: true });
+    if (!product) {
+      return c.json({ message: "Product not found" }, 404);
+    }
+    return c.json({ message: "Product updated", product });
+  } catch (error) {
+    return c.json({ message: "Error updating product", error }, 500);
+  }
+});
+
+// DELETE - Delete product by ID
+app.delete("/api/product/:id", async (c) => {
+  const { id } = c.req.param();
+
+  try {
+    const product = await Product.findByIdAndDelete(id);
+    if (!product) {
+      return c.json({ message: "Product not found" }, 404);
+    }
+    return c.json({ message: "Product deleted" });
+  } catch (error) {
+    return c.json({ message: "Error deleting product", error }, 500);
+  }
+});
+
+// Serve the application
+serve({
+  fetch: app.fetch,
+  port: process.env.PORT as unknown as number || 3000
+}, (info) => {
+  console.log(`Server is running on http://localhost:${info.port}`.bgGreen.black)
+})
+
+
+
+///////// schema with zod and ts
+
+import mongoose, { Schema, Document } from "mongoose";
+
+// Interface for Product Schema
+export interface IProduct extends Document {
+  productName: string;
+  productCode: string;
+  price: number;
+  description?: string;
+}
+
+// Product Schema Definition
+const ProductSchema = new Schema<IProduct>({
+  productName: { type: String, required: true },
+  productCode: { type: String, required: true, unique: true },
+  price: { type: Number, required: true },
+  description: { type: String, default: "" },
+}, { timestamps: true });
+
+// Export the Product model
+export default mongoose.model<IProduct>("Product", ProductSchema);
+
+
+
+/////
+
+import mongoose from "mongoose";
+import dotenv from "dotenv";
+
+dotenv.config();
+
+export const connectDb = async () => {
+  try {
+    await mongoose.connect(process.env.MONGO_URI as string);
+    console.log("✅ MongoDB Connected");
+  } catch (error) {
+    console.error("❌ MongoDB Connection Error:", error);
+    process.exit(1); // Exit process with failure
+  }
+};
+
+
+//// CRUD REACT
+
+import { useEffect, useState } from "react";
+import _ from "lodash";
+
+interface IProduct {
+  _id?: string;
+  productName: string;
+  productCode: string;
+  price: number;
+  description: string;
+}
+
+const ProductForm = () => {
+  const [products, setProducts] = useState<IProduct[]>([]);
+  const [product, setProduct] = useState<IProduct>({
+    productName: "",
+    productCode: "",
+    price: 0,
+    description: "",
+  });
+  const [editMode, setEditMode] = useState<boolean>(false);
+
+  // Fetch all products on component mount
+  useEffect(() => {
+    fetchProducts();
+  }, []);
+
+  const fetchProducts = async () => {
+    const response = await fetch("/api/products");
+    const data = await response.json();
+    setProducts(data);
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setProduct({ ...product, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const method = editMode ? "PUT" : "POST";
+      const url = editMode ? `/api/product/${product._id}` : "/api/product";
+      const res = await fetch(url, {
+        method,
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(product),
+      });
+
+      if (res.ok) {
+        setProduct({
+          productName: "",
+          productCode: "",
+          price: 0,
+          description: "",
+        });
+        setEditMode(false);
+        fetchProducts(); // Refresh the list
+      } else {
+        console.error("Failed to save product");
+      }
+    } catch (error) {
+      console.error("Error saving product:", error);
+    }
+  };
+
+  const handleEdit = (product: IProduct) => {
+    setProduct(product);
+    setEditMode(true);
+  };
+
+  const handleDelete = async (id: string) => {
+    try {
+      const res = await fetch(`/api/product/${id}`, { method: "DELETE" });
+      if (res.ok) {
+        fetchProducts(); // Refresh the list
+      } else {
+        console.error("Failed to delete product");
+      }
+    } catch (error) {
+      console.error("Error deleting product:", error);
+    }
+  };
+
+  // Use lodash to map products and create the JSX elements
+  const renderProductGrid = () => {
+    return _.map(
+      products,
+      (prod) => (
+        <div
+          key={prod._id}
+          style={{
+            border: "1px solid #ccc",
+            padding: "10px",
+            borderRadius: "8px",
+          }}
+        >
+          <h3>{prod.productName}</h3>
+          <p>{prod.productCode}</p>
+          <p>{prod.price}</p>
+          <p>{prod.description}</p>
+          <button onClick={() => handleEdit(prod)}>Edit</button>
+          <button onClick={() => handleDelete(prod._id!)}>Delete</button>
+        </div>
+      ),
+    );
+  };
+
+  return (
+    <div>
+      <h2>{editMode ? "Edit Product" : "Create Product"}</h2>
+      <form onSubmit={handleSubmit}>
+        <input
+          type="text"
+          name="productName"
+          value={product.productName}
+          onChange={handleInputChange}
+          placeholder="Product Name"
+          required
+        />
+        <input
+          type="text"
+          name="productCode"
+          value={product.productCode}
+          onChange={handleInputChange}
+          placeholder="Product Code"
+          required
+        />
+        <input
+          type="number"
+          name="price"
+          value={product.price}
+          onChange={handleInputChange}
+          placeholder="Price"
+          required
+        />
+        <input
+          type="text"
+          name="description"
+          value={product.description}
+          onChange={handleInputChange}
+          placeholder="Description"
+          required
+        />
+        <button type="submit">{editMode ? "Update" : "Create"} Product</button>
+      </form>
+
+      <h2>Product List</h2>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
+          gap: "20px",
+        }}
+      >
+        {renderProductGrid()}
+      </div>
+    </div>
+  );
+};
+
+export default ProductForm;
+
+
+
