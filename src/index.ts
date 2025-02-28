@@ -116,6 +116,7 @@ dotenv.config();
 import { serve } from "@hono/node-server";
 import { Hono } from "hono";
 import { compress } from "hono/compress";
+import { serveStatic } from '@hono/node-server/serve-static'
 import { logger } from "hono/logger";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import nodemailer from "nodemailer";
@@ -265,6 +266,11 @@ app.post("/generate2", async (c) => {
     return c.json({ error: "Something went wrong!" }, 500);
   }
 });
+
+/// Help me interviews
+
+
+app.use('*', serveStatic({ root: './helpme' }))
 
 console.log(`Server is running on port ${port}`);
 
