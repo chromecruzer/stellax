@@ -557,4 +557,183 @@ const ProductForm = () => {
 export default ProductForm;
 
 
+/// finalised 
+
+
+const esbuild = require('esbuild');
+const esbuildPluginTsc = require('esbuild-plugin-tsc')
+const { dependencies, devDependencies, peerDependencies } = require('./package.json');
+
+// Combine all dependencies to exclude from the bundle
+const externals = [
+    ...Object.keys(dependencies || {}),
+    ...Object.keys(devDependencies || {}),
+    ...Object.keys(peerDependencies || {}),
+];
+
+// Check if we're in development mode
+const isDevelopment = process.env.NODE_ENV === 'development';
+
+// Function to handle the build process with watch mode
+const build = async () => {
+    const ctx = await esbuild.context({
+        plugins: [
+            esbuildPluginTsc(),
+        ],
+        entryPoints: ['./src/main.ts'],
+        bundle: true,
+        outfile: './dist/bundle.main.js',
+        external: externals,
+        platform: 'node', // Use 'browser' if targeting browser
+        sourcemap: true, // Generate source maps
+        minify: false,
+        format: 'cjs', // CommonJS format; change to 'esm' for ES module output
+    });
+
+    // If in development mode, enable watch mode
+    if (isDevelopment) {
+        console.log('Running in development mode. Watching for changes...');
+        await ctx.watch(); // Enable watch mode
+    } else {
+        console.log('Running in production mode. Building once...');
+        // Perform the initial build and then exit
+        await ctx.rebuild();
+        ctx.dispose(); // Properly dispose the context and exit
+    }
+};
+
+// Call the build function
+build().catch((err) => {
+    console.error('Build failed:', err);
+    process.exit(1); // Exit with an error code if build fails
+});
+
+
+
+//////////////
+
+ "main": "dist/bundle.main.js",
+  "source": "src/main.ts",
+  "scripts": {
+    "build:dev": "parcel watch",
+    "build:prod": "npm run clean && parcel build --no-cache --no-source-maps --detailed-report",
+    "build2:prod": "cross-env NODE_ENV=production node esbuild.config.cjs",
+    "build2:dev": "cross-env NODE_ENV=development node esbuild.config.cjs",
+    "serve": "nodemon dist/bundle.main.js",
+    "start": "node bundle.main.js",
+    "dev": "concurrently -k -n DEVELOPMENT,SERVE -c yellow,blue \"npm:build:dev\" \"npm:serve\"",
+    "test": "vitest",
+    "clean": "rimraf dist"
+  },
+
+/////
+
+ "concurrently": "^9.1.2",
+    "cross-env": "^7.0.3",
+    "esbuild": "^0.25.5",
+    "esbuild-plugin-tsc": "^0.5.0",
+    "nodemon": "^3.1.10",
+    "parcel": "^2.15.2",
+    "rimraf": "^5.0.10",
+including eslint and prettier 
+
+///
+
+{
+  "printWidth": 100,           
+  "tabWidth": 2,
+  "semi": true,
+  "singleQuote": true,
+  "trailingComma": "none",     
+  "bracketSpacing": true,
+  "arrowParens": "avoid"
+}
+
+// deploy.js
+
+// deploy.js
+const fs = require('fs');
+const path = require('path');
+
+const ROOT_DIR = __dirname; // packages/app-base-setup
+const DIST_DIR = path.join(ROOT_DIR, 'dist');
+
+// Helpers
+function copyFile(src, dest) {
+  fs.copyFileSync(src, dest);
+  console.log(`Copied ${src} -> ${dest}`);
+}
+
+function copyDir(srcDir, destDir) {
+  if (!fs.existsSync(destDir)) fs.mkdirSync(destDir, { recursive: true });
+
+  const entries = fs.readdirSync(srcDir, { withFileTypes: true });
+  for (const entry of entries) {
+    const srcPath = path.join(srcDir, entry.name);
+    const destPath = path.join(destDir, entry.name);
+
+    if (entry.isDirectory()) {
+      copyDir(srcPath, destPath);
+    } else {
+      copyFile(srcPath, destPath);
+    }
+  }
+}
+
+// Run deployment
+(function main() {
+  try {
+    // Copy .env
+    const envSrc = path.join(ROOT_DIR, '.env');
+    const envDest = path.join(DIST_DIR, '.env');
+    if (fs.existsSync(envSrc)) copyFile(envSrc, envDest);
+
+    // Copy public/
+    const publicSrc = path.join(ROOT_DIR, 'public');
+    const publicDest = path.join(DIST_DIR, 'public');
+    if (fs.existsSync(publicSrc)) copyDir(publicSrc, publicDest);
+
+    // Copy package.json
+    const pkgSrc = path.join(ROOT_DIR, 'package.json');
+    const pkgDest = path.join(DIST_DIR, 'package.json');
+    if (fs.existsSync(pkgSrc)) copyFile(pkgSrc, pkgDest);
+
+    console.log('Deploy completed.');
+  } catch (err) {
+    console.error('Deploy failed:', err);
+  }
+})();
+
+
+///
+
+// eslint
+
+// eslint.config.js (CommonJS version)
+const parserTs = require('@typescript-eslint/parser');
+const pluginTs = require('@typescript-eslint/eslint-plugin');
+
+module.exports = [
+  {
+    files: ['packages/*/src/**/*.ts'],
+    languageOptions: {
+      parser: parserTs,
+      parserOptions: {
+        project: ['./packages/*/tsconfig.json'],
+        tsconfigRootDir: process.cwd(),
+      },
+    },
+    plugins: {
+      '@typescript-eslint': pluginTs,
+    },
+    rules: {
+      'no-return-await': 'error',
+      'consistent-return': 'error',
+    },
+  },
+];
+
+
+
+
 
