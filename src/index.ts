@@ -243,7 +243,7 @@ app.post("/generate2", async (c) => {
       return c.json({ error: "No prompt provided!" }, 400);
     }
 
-    const model = await loadModel("gemini-1.5-flash");
+    const model = await loadModel("gemini-2.5-flash");
     const response = await model.generateContent(prompt);
     const generatedText = response.response?.candidates?.[0]?.content?.parts
       ?.[0]?.text;
