@@ -189,7 +189,7 @@ const sendConsolidatedEmail = async () => {
 };
 
 // Set a timer to send emails every 5 minutes
-setInterval(sendConsolidatedEmail, 12 * 60 * 1000); // 12 minutes in milliseconds
+//setInterval(sendConsolidatedEmail, 12 * 60 * 1000); // 12 minutes in milliseconds
 
 // Load the AI models
 const loadModel = async (modelName: string) => {
@@ -211,7 +211,7 @@ app.post("/generate", async (c) => {
     }
 
    // const model = await loadModel("gemini-1.5-flash");
-    const model = await loadModel("gemini-2.0-flash");
+    const model = await loadModel("gemini-2.5-flash-lite");
     const response = await model.generateContent(prompt);
     const generatedText = response.response?.candidates?.[0]?.content?.parts
       ?.[0]?.text;
@@ -227,7 +227,7 @@ app.post("/generate", async (c) => {
       .replace(/&lt;/g, "<").replace(/&gt;/g, ">")
       .trim();
 
-    logRequest("/generate", { prompt });
+  //  logRequest("/generate", { prompt });
     return c.text(formattedText, 200);
   } catch (error) {
     console.error("Error:", error);
@@ -243,7 +243,7 @@ app.post("/generate2", async (c) => {
       return c.json({ error: "No prompt provided!" }, 400);
     }
 
-    const model = await loadModel("gemini-2.5-flash");
+    const model = await loadModel("gemini-2.5-pro");
     const response = await model.generateContent(prompt);
     const generatedText = response.response?.candidates?.[0]?.content?.parts
       ?.[0]?.text;
@@ -259,7 +259,7 @@ app.post("/generate2", async (c) => {
       .replace(/&lt;/g, "<").replace(/&gt;/g, ">")
       .trim();
 
-    logRequest("/generate2", { prompt });
+   // logRequest("/generate2", { prompt });
     return c.text(formattedText, 200);
   } catch (error) {
     console.error("Error:", error);
